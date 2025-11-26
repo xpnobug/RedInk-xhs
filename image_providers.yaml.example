@@ -27,3 +27,12 @@ providers:
     base_url: https://your-api-endpoint.com
     model: dall-e-3
     high_concurrency: false
+
+  # OpenRouter（支持 Gemini 2.5 Flash Image Preview 等模型）
+  openrouter_gemini:
+    type: openrouter
+    api_key: sk-or-xxxxxxxxxxxxxxxxxxxx
+    base_url: https://openrouter.ai/api
+    model: google/gemini-2.5-flash-image-preview
+    high_concurrency: false
+

@@ -131,7 +131,7 @@ class OpenAICompatibleGenerator(ImageGeneratorBase):
         quality: str
     ) -> bytes:
         """通过 /v1/images/generations 端点生成"""
-        url = f"{self.base_url.rstrip('/')}/v1/images/generations"
+        url = f"{self.base_url.rstrip('/')}/v1/chat/completions"
         logger.debug(f"  发送请求到: {url}")
 
         headers = {

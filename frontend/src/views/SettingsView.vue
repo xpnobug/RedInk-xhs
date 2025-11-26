@@ -259,6 +259,7 @@
             <select class="form-select" v-model="imageProviderForm.type">
               <option value="google_genai">Google GenAI</option>
               <option value="image_api">OpenAI 兼容接口</option>
+              <option value="openrouter">OpenRouter</option>
             </select>
           </div>
           <div class="form-group">
@@ -271,13 +272,13 @@
             />
             <span class="form-hint" v-if="editingImageProvider && hasExistingApiKey(imageProviderForm)">已配置 API Key，留空表示不修改</span>
           </div>
-          <div class="form-group" v-if="imageProviderForm.type === 'image_api'">
+          <div class="form-group" v-if="imageProviderForm.type === 'image_api' || imageProviderForm.type === 'openrouter'">
             <label>Base URL</label>
             <input
               type="text"
               class="form-input"
               v-model="imageProviderForm.base_url"
-              placeholder="例如: https://api.openai.com"
+              :placeholder="imageProviderForm.type === 'openrouter' ? '例如: https://openrouter.ai/api' : '例如: https://api.openai.com'"
             />
           </div>
           <div class="form-group">
