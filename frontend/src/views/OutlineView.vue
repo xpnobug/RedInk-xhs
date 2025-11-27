@@ -136,8 +136,8 @@ const startGeneration = () => {
 /* 网格布局 */
 .outline-grid {
   display: grid;
-  /* 响应式列：最小宽度 280px，自动填充 */
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* 响应式列：最小宽度 300px，自动填充 */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
   max-width: 1400px;
   margin: 0 auto;
@@ -147,27 +147,27 @@ const startGeneration = () => {
 .outline-card {
   display: flex;
   flex-direction: column;
-  padding: 16px; /* 减小内边距 */
-  transition: all 0.2s ease;
-  border: none;
-  border-radius: 8px; /* 较小的圆角 */
+  padding: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
   background: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  /* 保持一定的长宽比感，虽然高度自适应，但由于 flex column 和内容撑开，
-     这里设置一个 min-height 让它看起来像个竖向卡片 */
-  min-height: 360px; 
+  box-shadow: var(--shadow-sm);
+  min-height: 380px; 
   position: relative;
 }
 
 .outline-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-fade);
   z-index: 10;
 }
 
 .outline-card.dragging-over {
   border: 2px dashed var(--primary);
-  opacity: 0.8;
+  background: var(--primary-light);
+  transform: scale(1.02);
 }
 
 /* 顶部栏 */
@@ -175,47 +175,54 @@ const startGeneration = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f5f5f5;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .page-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .page-number {
   font-size: 14px;
   font-weight: 700;
-  color: #ccc;
-  font-family: 'Inter', sans-serif;
+  color: var(--text-placeholder);
+  font-family: 'Monaco', monospace;
 }
 
 .page-type {
   font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 .page-type.cover { color: #FF4D4F; background: #FFF1F0; }
-.page-type.content { color: #8c8c8c; background: #f5f5f5; }
+.page-type.content { color: var(--text-sub); background: #F3F4F6; }
 .page-type.summary { color: #52C41A; background: #F6FFED; }
 
 .card-controls {
   display: flex;
   gap: 8px;
-  opacity: 0.4;
+  opacity: 0;
   transition: opacity 0.2s;
 }
 .outline-card:hover .card-controls { opacity: 1; }
 
 .drag-handle {
   cursor: grab;
-  padding: 2px;
+  padding: 4px;
+  border-radius: 4px;
+  color: var(--text-placeholder);
+  transition: all 0.2s;
+}
+.drag-handle:hover { 
+  background: #F3F4F6; 
+  color: var(--text-main);
 }
 .drag-handle:active { cursor: grabbing; }
 
@@ -223,11 +230,15 @@ const startGeneration = () => {
   background: none;
   border: none;
   cursor: pointer;
-  color: #999;
-  padding: 2px;
-  transition: color 0.2s;
+  color: var(--text-placeholder);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
 }
-.icon-btn:hover { color: #FF4D4F; }
+.icon-btn:hover { 
+  background: #FEF2F2;
+  color: #DC2626; 
+}
 
 /* 文本区域 - 核心 */
 .textarea-paper {
@@ -236,43 +247,50 @@ const startGeneration = () => {
   border: none;
   background: transparent;
   padding: 0;
-  font-size: 16px; /* 更大的字号 */
-  line-height: 1.7; /* 舒适行高 */
-  color: #333;
-  resize: none; /* 禁止手动拉伸，保持卡片整体感 */
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text-main);
+  resize: none;
   font-family: inherit;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 
 .textarea-paper:focus {
   outline: none;
 }
 
+.textarea-paper::placeholder {
+  color: var(--text-placeholder);
+}
+
 .word-count {
   text-align: right;
-  font-size: 11px;
-  color: #ddd;
+  font-size: 12px;
+  color: var(--text-placeholder);
   margin-top: auto;
+  font-variant-numeric: tabular-nums;
 }
 
 /* 添加卡片 */
 .add-card-dashed {
-  border: 2px dashed #eee;
+  border: 2px dashed var(--border-color);
   background: transparent;
   box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  min-height: 360px;
-  color: #ccc;
-  transition: all 0.2s;
+  min-height: 380px;
+  color: var(--text-placeholder);
+  transition: all 0.3s;
+  border-radius: var(--radius-lg);
 }
 
 .add-card-dashed:hover {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(255, 36, 66, 0.02);
+  background: var(--primary-fade);
+  transform: translateY(-4px);
 }
 
 .add-content {
@@ -280,8 +298,14 @@ const startGeneration = () => {
 }
 
 .add-icon {
-  font-size: 32px;
+  font-size: 40px;
   font-weight: 300;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  line-height: 1;
+}
+
+.add-content span {
+  font-size: 14px;
+  font-weight: 500;
 }
 </style>
