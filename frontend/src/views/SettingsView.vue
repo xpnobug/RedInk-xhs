@@ -90,6 +90,11 @@
               <div class="action-divider"></div>
 
               <div class="icon-actions">
+                <button class="btn-icon" @click="testTextProviderInList(name as string, provider)" title="测试连接">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                  </svg>
+                </button>
                 <button class="btn-icon" @click="openEditTextProviderModal(name as string, provider)" title="编辑">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -174,6 +179,11 @@
               <div class="action-divider"></div>
 
               <div class="icon-actions">
+                <button class="btn-icon" @click="testImageProviderInList(name as string, provider)" title="测试连接">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                  </svg>
+                </button>
                 <button class="btn-icon" @click="openEditImageProviderModal(name as string, provider)" title="编辑">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -279,9 +289,36 @@
               />
             </div>
           </div>
+          <div class="form-group" v-if="textProviderForm.type === 'openai_compatible'">
+            <label>API 端点路径</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+              <input
+                type="text"
+                class="form-input"
+                v-model="textProviderForm.endpoint_type"
+                placeholder="例如: /v1/chat/completions"
+              />
+            </div>
+            <span class="form-hint">
+              默认端点：/v1/chat/completions（大多数 OpenAI 兼容 API 使用此端点）
+            </span>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn" @click="closeTextProviderModal">取消</button>
+          <button
+            class="btn btn-secondary"
+            @click="testTextConnection"
+            :disabled="testingText || (!textProviderForm.api_key && !editingTextProvider)"
+          >
+            <span v-if="testingText" class="spinner-small"></span>
+            {{ testingText ? '测试中...' : '测试连接' }}
+          </button>
           <button class="btn btn-primary" @click="saveTextProvider">
             {{ editingTextProvider ? '保存' : '添加' }}
           </button>
@@ -371,6 +408,25 @@
               />
             </div>
           </div>
+          <div class="form-group" v-if="imageProviderForm.type === 'image_api'">
+            <label>API 端点路径</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+              <input
+                type="text"
+                class="form-input"
+                v-model="imageProviderForm.endpoint_type"
+                placeholder="例如: /v1/images/generations 或 /v1/chat/completions"
+              />
+            </div>
+            <span class="form-hint">
+              常用端点：/v1/images/generations（标准图片生成）、/v1/chat/completions（即梦等返回链接的 API）
+            </span>
+          </div>
           <div class="form-group">
             <label class="toggle-label">
               <span>高并发模式</span>
@@ -380,9 +436,26 @@
             </label>
             <span class="form-hint">启用后将并行生成图片，速度更快但对 API 质量要求较高。GCP 300$ 试用账号不建议启用。</span>
           </div>
+          <div class="form-group">
+            <label class="toggle-label">
+              <span>短 Prompt 模式</span>
+              <div class="toggle-switch" :class="{ active: imageProviderForm.short_prompt }" @click="imageProviderForm.short_prompt = !imageProviderForm.short_prompt">
+                <div class="toggle-slider"></div>
+              </div>
+            </label>
+            <span class="form-hint">启用后使用精简版提示词，适合有字符限制的 API（如即梦 1600 字符限制）。</span>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn" @click="closeImageProviderModal">取消</button>
+          <button
+            class="btn btn-secondary"
+            @click="testImageConnection"
+            :disabled="testingImage || (!imageProviderForm.api_key && !editingImageProvider)"
+          >
+            <span v-if="testingImage" class="spinner-small"></span>
+            {{ testingImage ? '测试中...' : '测试连接' }}
+          </button>
           <button class="btn btn-primary" @click="saveImageProvider">
             {{ editingImageProvider ? '保存' : '添加' }}
           </button>
@@ -394,10 +467,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getConfig, updateConfig, type Config } from '../api'
+import { getConfig, updateConfig, testConnection, type Config } from '../api'
 
 const loading = ref(true)
 const saving = ref(false)
+const testingText = ref(false)
+const testingImage = ref(false)
 const activeTab = ref<'text' | 'image'>('text')
 
 // 文本生成配置
@@ -427,6 +502,7 @@ const textProviderForm = ref({
   api_key: '',
   base_url: '',
   model: '',
+  endpoint_type: '/v1/chat/completions',
   _has_api_key: false // 标记是否已有 API Key
 })
 
@@ -440,6 +516,8 @@ const imageProviderForm = ref({
   base_url: '',
   model: '',
   high_concurrency: false,
+  short_prompt: false,
+  endpoint_type: '/v1/images/generations',
   _has_api_key: false
 })
 
@@ -546,6 +624,7 @@ function openAddTextProviderModal() {
     api_key: '',
     base_url: '',
     model: '',
+    endpoint_type: '/v1/chat/completions',
     _has_api_key: false
   }
   showTextProviderModal.value = true
@@ -560,6 +639,7 @@ function openEditTextProviderModal(name: string, provider: any) {
     api_key: '', // 不显示已有的 key，让用户重新输入才会更新
     base_url: provider.base_url || '',
     model: provider.model || '',
+    endpoint_type: provider.endpoint_type || '/v1/chat/completions',
     _has_api_key: !!provider.api_key // 标记是否已有 key
   }
   showTextProviderModal.value = true
@@ -609,6 +689,11 @@ async function saveTextProvider() {
     providerData.base_url = textProviderForm.value.base_url
   }
 
+  // 如果是 OpenAI 兼容接口，保存 endpoint_type
+  if (textProviderForm.value.type === 'openai_compatible') {
+    providerData.endpoint_type = textProviderForm.value.endpoint_type
+  }
+
   textConfig.value.providers[name] = providerData
 
   closeTextProviderModal()
@@ -636,6 +721,8 @@ function openAddImageProviderModal() {
     base_url: '',
     model: '',
     high_concurrency: false,
+    short_prompt: false,
+    endpoint_type: '/v1/images/generations',
     _has_api_key: false
   }
   showImageProviderModal.value = true
@@ -651,6 +738,8 @@ function openEditImageProviderModal(name: string, provider: any) {
     base_url: provider.base_url || '',
     model: provider.model || '',
     high_concurrency: provider.high_concurrency || false,
+    short_prompt: provider.short_prompt || false,
+    endpoint_type: provider.endpoint_type || '/v1/images/generations',
     _has_api_key: !!provider.api_key
   }
   showImageProviderModal.value = true
@@ -687,7 +776,13 @@ async function saveImageProvider() {
   const providerData: any = {
     type: imageProviderForm.value.type,
     model: imageProviderForm.value.model,
-    high_concurrency: imageProviderForm.value.high_concurrency
+    high_concurrency: imageProviderForm.value.high_concurrency,
+    short_prompt: imageProviderForm.value.short_prompt
+  }
+
+  // 如果是 OpenAI 兼容接口，保存 endpoint_type
+  if (imageProviderForm.value.type === 'image_api') {
+    providerData.endpoint_type = imageProviderForm.value.endpoint_type
   }
 
   // 如果填写了新的 API Key，使用新的；否则保留原有的
@@ -715,6 +810,84 @@ async function deleteImageProvider(name: string) {
       imageConfig.value.active_provider = ''
     }
     await autoSaveConfig()
+  }
+}
+
+// 测试文本服务商连接
+async function testTextConnection() {
+  testingText.value = true
+  try {
+    const result = await testConnection({
+      type: textProviderForm.value.type,
+      provider_name: editingTextProvider.value || undefined,
+      api_key: textProviderForm.value.api_key || undefined,
+      base_url: textProviderForm.value.base_url,
+      model: textProviderForm.value.model
+    })
+    if (result.success) {
+      alert('✅ ' + result.message)
+    }
+  } catch (e: any) {
+    alert('❌ 连接失败：' + (e.response?.data?.error || e.message))
+  } finally {
+    testingText.value = false
+  }
+}
+
+// 测试图片服务商连接
+async function testImageConnection() {
+  testingImage.value = true
+  try {
+    const result = await testConnection({
+      type: imageProviderForm.value.type,
+      provider_name: editingImageProvider.value || undefined,
+      api_key: imageProviderForm.value.api_key || undefined,
+      base_url: imageProviderForm.value.base_url,
+      model: imageProviderForm.value.model
+    })
+    if (result.success) {
+      alert('✅ ' + result.message)
+    }
+  } catch (e: any) {
+    alert('❌ 连接失败：' + (e.response?.data?.error || e.message))
+  } finally {
+    testingImage.value = false
+  }
+}
+
+// 测试列表中的文本服务商
+async function testTextProviderInList(name: string, provider: any) {
+  try {
+    const result = await testConnection({
+      type: provider.type,
+      provider_name: name,
+      api_key: undefined,
+      base_url: provider.base_url,
+      model: provider.model
+    })
+    if (result.success) {
+      alert('✅ ' + result.message)
+    }
+  } catch (e: any) {
+    alert('❌ 连接失败：' + (e.response?.data?.error || e.message))
+  }
+}
+
+// 测试列表中的图片服务商
+async function testImageProviderInList(name: string, provider: any) {
+  try {
+    const result = await testConnection({
+      type: provider.type,
+      provider_name: name,
+      api_key: undefined,
+      base_url: provider.base_url,
+      model: provider.model
+    })
+    if (result.success) {
+      alert('✅ ' + result.message)
+    }
+  } catch (e: any) {
+    alert('❌ 连接失败：' + (e.response?.data?.error || e.message))
   }
 }
 

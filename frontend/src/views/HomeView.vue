@@ -116,9 +116,17 @@
         </div>
 
         <div v-if="recentRecords.length > 0" class="recent-list">
-          <div v-for="record in recentRecords" :key="record.id" class="recent-item" @click="loadRecord(record)">
-            <div class="recent-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="#666"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          <div v-for="record in recentRecords" :key="record.id" class="recent-item" @click="viewRecord(record)">
+            <div class="recent-thumbnail">
+              <img
+                v-if="record.thumbnail"
+                :src="getThumbnailUrl(record)"
+                :alt="record.title"
+                @error="handleThumbnailError"
+              />
+              <div v-else class="thumbnail-placeholder">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              </div>
             </div>
             <div class="recent-info">
               <div class="recent-title">{{ record.title }}</div>
@@ -320,19 +328,23 @@ const formatDate = (str: string) => {
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`
 }
 
-const loadRecord = async (record: any) => {
-   // Simple load for edit
-   try {
-     const res = await getHistory(record.id)
-     if (res.success && res.record) {
-        store.setTopic(res.record.title)
-        store.setOutline(res.record.outline.raw, res.record.outline.pages)
-        store.recordId = res.record.id
-        router.push('/outline')
-     }
-   } catch(e) {
-     console.error(e)
-   }
+const viewRecord = (record: any) => {
+  // 跳转到历史详情页面，直接查看图片
+  router.push(`/history/${record.id}`)
+}
+
+const getThumbnailUrl = (record: any) => {
+  // 如果有缩略图，显示缩略图
+  if (record.thumbnail) {
+    return `/api/images/${record.task_id || record.images?.task_id}/${record.thumbnail}?thumbnail=true`
+  }
+  return ''
+}
+
+const handleThumbnailError = (event: Event) => {
+  // 缩略图加载失败时隐藏图片，显示占位符
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
 }
 
 const handleGenerate = async () => {
@@ -408,7 +420,6 @@ onUnmounted(() => {
   padding: 20px;
   width: 100%;
   will-change: transform;
-  opacity: 0.8; /* 稍微降低不透明度，减少干扰 */
 }
 
 .showcase-item {
@@ -416,12 +427,7 @@ onUnmounted(() => {
   aspect-ratio: 3 / 4;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: var(--shadow-md);
-  transition: transform 0.3s ease;
-}
-
-.showcase-item:hover {
-  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .showcase-item img {
@@ -439,16 +445,16 @@ onUnmounted(() => {
   bottom: 0;
   background: linear-gradient(
     to bottom,
-    rgba(247, 248, 250, 0.85) 0%,
-    rgba(247, 248, 250, 0.8) 30%,
-    rgba(247, 248, 250, 0.7) 100%
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.65) 30%,
+    rgba(255, 255, 255, 0.6) 100%
   );
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
 }
 
 .home-container {
-  max-width: 1000px; /* 稍微收窄，增加聚焦感 */
-  padding-top: 40px;
+  max-width: 1100px;
+  padding-top: 10px;
   position: relative;
   z-index: 1;
 }
@@ -457,8 +463,8 @@ onUnmounted(() => {
 .section-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+  align-items: flex-end;
+  margin-bottom: 16px;
   padding: 0 4px;
 }
 
@@ -466,47 +472,38 @@ onUnmounted(() => {
   font-size: 18px;
   font-weight: 700;
   color: var(--text-main);
-  letter-spacing: -0.02em;
 }
 
 .link-more {
   font-size: 13px;
   color: var(--text-sub);
   cursor: pointer;
-  transition: color 0.2s;
-  font-weight: 500;
 }
 .link-more:hover { color: var(--primary); }
 
 /* Hero Section */
 .hero-section {
   text-align: center;
-  margin-bottom: 48px;
-  padding: 60px 40px;
-  animation: fadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-  background: var(--bg-glass-heavy);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  backdrop-filter: var(--backdrop-blur);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  margin-bottom: 40px;
+  padding: 50px 60px;
+  animation: fadeIn 0.6s ease-out;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
 }
 
 /* Content Section */
 .content-section {
-  background: var(--bg-glass-heavy);
-  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24px;
   padding: 40px;
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: var(--backdrop-blur);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  margin-top: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
 }
 
 .hero-content {
-  margin-bottom: 48px;
-  max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-bottom: 36px;
 }
 
 .brand-pill {
@@ -716,8 +713,8 @@ onUnmounted(() => {
 
 .remove-image-btn {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 2px;
+  right: 2px;
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -729,8 +726,7 @@ onUnmounted(() => {
   justify-content: center;
   color: white;
   opacity: 0;
-  transition: all 0.2s;
-  backdrop-filter: blur(4px);
+  transition: opacity 0.2s;
 }
 
 .uploaded-image-item:hover .remove-image-btn {
@@ -739,33 +735,29 @@ onUnmounted(() => {
 
 .remove-image-btn:hover {
   background: var(--primary);
-  transform: scale(1.1);
 }
 
 .upload-hint {
   flex: 1;
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--text-sub);
   text-align: right;
-  font-style: italic;
 }
 
 /* Dashboard Grid */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 32px;
+  gap: 24px;
   animation: slideUp 0.6s ease-out 0.2s backwards;
 }
 
 .feature-card {
   height: 100%;
-  min-height: 320px;
+  min-height: 280px;
   display: flex;
   flex-direction: column;
-  padding: 0; /* padding moved to inner elements */
-  background: transparent;
-  box-shadow: none;
+  padding: 24px;
 }
 
 .card-header {
@@ -773,7 +765,6 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
-  padding: 0 4px;
 }
 
 .header-left {
@@ -783,41 +774,37 @@ onUnmounted(() => {
 }
 
 .section-title-sm {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   margin: 0;
-  color: var(--text-main);
 }
 
 .icon-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 20px;
 }
 
 .icon-box.purple {
   background: linear-gradient(135deg, #9F7AEA 0%, #805AD5 100%);
-  box-shadow: 0 8px 16px rgba(128, 90, 213, 0.25);
+  box-shadow: 0 4px 12px rgba(128, 90, 213, 0.2);
 }
 
 .icon-box.orange {
   background: linear-gradient(135deg, #F6AD55 0%, #ED8936 100%);
-  box-shadow: 0 8px 16px rgba(237, 137, 54, 0.25);
+  box-shadow: 0 4px 12px rgba(237, 137, 54, 0.2);
 }
 
 .btn-text {
   background: none;
   border: none;
   color: var(--text-sub);
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
-  font-weight: 500;
-  transition: color 0.2s;
 }
 .btn-text:hover { color: var(--primary); }
 
@@ -825,44 +812,52 @@ onUnmounted(() => {
 .recent-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .recent-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
-  border-radius: var(--radius-md);
-  background: #FFFFFF;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #F9FAFB;
   cursor: pointer;
   transition: all 0.2s;
-  border: 1px solid transparent;
-  box-shadow: var(--shadow-sm);
 }
 
 .recent-item:hover {
-  background: #FFFFFF;
-  border-color: var(--primary-fade);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  background: #F0F2F5;
+  transform: translateX(2px);
 }
 
-.recent-icon {
-  width: 40px;
-  height: 40px;
-  background: #F3F4F6;
-  border-radius: 10px;
+.recent-thumbnail {
+  width: 36px;
+  height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f5f5f5;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-sub);
-  transition: all 0.2s;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
-.recent-item:hover .recent-icon {
-  background: var(--primary-light);
-  color: var(--primary);
+.recent-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnail-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ccc;
+  background: white;
 }
 
 .recent-info {
@@ -871,28 +866,22 @@ onUnmounted(() => {
 }
 
 .recent-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--text-main);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 4px;
 }
 
 .recent-date {
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--text-sub);
 }
 
 .recent-arrow {
   color: var(--text-placeholder);
-  transition: all 0.2s;
-}
-
-.recent-item:hover .recent-arrow {
-  color: var(--primary);
-  transform: translateX(4px);
+  font-size: 16px;
 }
 
 .empty-state-mini {
@@ -900,13 +889,11 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--text-placeholder);
   font-size: 14px;
-  background: #F9FAFB;
-  border-radius: var(--radius-md);
-  border: 1px dashed var(--border-color);
-  text-align: center;
-  padding: 40px;
+  background: #FAFAFA;
+  border-radius: 12px;
+  border: 1px dashed #eee;
 }
 
 /* Trend List */
@@ -919,58 +906,45 @@ onUnmounted(() => {
 .trend-item {
   display: flex;
   align-items: center;
-  padding: 16px;
-  background: #FFFFFF;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s;
+  padding: 12px 0;
+  border-bottom: 1px solid #F5F5F5;
 }
-
-.trend-item:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
+.trend-item:last-child { border-bottom: none; }
 
 .trend-rank {
   width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-secondary);
+  text-align: center;
+  font-weight: 800;
+  font-size: 16px;
   margin-right: 12px;
-  font-family: 'Monaco', monospace;
+  color: var(--text-placeholder);
+  font-style: italic;
 }
 
-.trend-rank.rank-1 { color: #FFD700; }
-.trend-rank.rank-2 { color: #C0C0C0; }
-.trend-rank.rank-3 { color: #CD7F32; }
+.trend-rank.rank-1 { color: #FF2442; }
+.trend-rank.rank-2 { color: #FF6B81; }
+.trend-rank.rank-3 { color: #FF9CA8; }
 
 .trend-name {
-  flex: 1;
-  font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-main);
+  flex: 1;
+  font-size: 14px;
 }
 
 .trend-hot {
-  display: flex;
-  align-items: center;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-sub);
-  font-weight: 500;
 }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(40px); }
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -979,19 +953,16 @@ onUnmounted(() => {
   bottom: 32px;
   left: 50%;
   transform: translateX(-50%);
-  background: #FEF2F2;
-  color: #DC2626;
+  background: #FF4D4F;
+  color: white;
   padding: 12px 24px;
-  border-radius: 100px;
-  box-shadow: var(--shadow-lg);
+  border-radius: 50px;
+  box-shadow: 0 8px 24px rgba(255, 77, 79, 0.3);
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  border: 1px solid #FEE2E2;
   z-index: 1000;
-  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideUp 0.3s ease-out;
 }
 
 /* Responsive */

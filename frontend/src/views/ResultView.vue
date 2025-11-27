@@ -43,20 +43,19 @@
           </div>
           
           <!-- Action Bar -->
-          <div class="action-bar">
-            <span class="page-label">Page {{ image.index + 1 }}</span>
+          <div style="padding: 12px; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; color: var(--text-sub);">Page {{ image.index + 1 }}</span>
             <div style="display: flex; gap: 8px;">
               <button 
-                class="card-btn refresh"
+                style="border: none; background: none; color: var(--text-sub); cursor: pointer; display: flex; align-items: center;"
                 title="重新生成此图"
                 @click="handleRegenerate(image)"
                 :disabled="regeneratingIndex === image.index"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                <span v-if="regeneratingIndex !== image.index">重绘</span>
               </button>
               <button 
-                class="card-btn download"
+                style="border: none; background: none; color: var(--primary); cursor: pointer; font-size: 12px;"
                 @click="downloadOne(image)"
               >
                 下载
@@ -70,97 +69,18 @@
 </template>
 
 <style scoped>
-.grid-cols-4 {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 24px;
-}
-
-.image-card {
-  background: white;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid transparent;
-}
-
-.image-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--primary-fade);
+/* 确保图片预览区域正确填充 */
+.image-card > div:first-child {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .image-card:hover .hover-overlay {
   opacity: 1;
 }
-
-.image-card img {
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 .image-card:hover img {
   transform: scale(1.05);
-}
-
-.hover-overlay {
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
-}
-
-.action-bar {
-  padding: 12px 16px;
-  border-top: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: white;
-}
-
-.page-label {
-  font-size: 12px;
-  color: var(--text-sub);
-  font-weight: 500;
-  font-family: 'Monaco', monospace;
-}
-
-.card-btn {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.card-btn.refresh {
-  color: var(--text-sub);
-}
-.card-btn.refresh:hover:not(:disabled) {
-  background: #F3F4F6;
-  color: var(--text-main);
-}
-
-.card-btn.download {
-  color: var(--primary);
-  background: var(--primary-fade);
-}
-.card-btn.download:hover {
-  background: var(--primary-light);
-}
-
-.spinner {
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 </style>
 
